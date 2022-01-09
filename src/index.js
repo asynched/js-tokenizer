@@ -1,5 +1,7 @@
 // @ts-check
 
+const fs = require('fs')
+
 const KEYWORDS = [
   'let',
   'const',
@@ -9,10 +11,11 @@ const KEYWORDS = [
   'undefined',
   'null',
 ]
-const PONCTUATIONS = ['=', '<', '>', ';']
-const OPERATORS = ['+', '-', '/', '*', '%']
+const PONCTUATIONS = ['=', ';', '{', '}']
+const OPERATORS = ['+', '-', '/', '*', '%', '<', '>']
 const STRING = ['"', "'", '`']
 
+const WORDS = /^(\$?[\w\d]+?)$/ // FIXME: This won't really work, since it allows identifiers or keywords to start with numbers. It's a workaround.
 const WHITESPACE = /(\s|\n)/
 const NUMBERS = /[\d]/
 const NUMBERS_FLOATING = /(\d|\.)/
@@ -118,14 +121,55 @@ const tokenizer = (program) => {
       continue
     }
 
+    // If the current char matches a test for words (such as a keyword or an identifier),
+    // loop until it doesn't match anymore and append the token as either an identifier
+    // or a keyword.
+    if (WORDS.test(char)) {
+      let token = ''
+
+      // While the current char matches
+      // a word test, append the char
+      // to the token
+      while (WORDS.test(char)) {
+        token += char
+        current += 1
+        char = program[current]
+      }
+
+      // Test for a keyword or push it as an identifier
+      if (KEYWORDS.includes(token)) {
+        tokens.push({
+          type: 'keyword',
+          value: token,
+        })
+      } else {
+        tokens.push({
+          type: 'identifier',
+          value: token,
+        })
+      }
+
+      continue
+    }
+
     current++
   }
 
   return tokens
 }
 
-let program = `
-let name = "Eder";
+/**
+ * Logs and writes a file
+ * @param { TokenType[] } tokens Tokens
+ */
+const logAndWriteTokens = (tokens) => {
+  console.log(tokens)
+  fs.writeFileSync('tokens.json', JSON.stringify(tokens, null, 4))
+}
+
+let program = `let name = "Eder";
 let age = 15 + 5;`
 
-console.log(tokenizer(program))
+const tokens = tokenizer(program)
+
+logAndWriteTokens(tokens)
