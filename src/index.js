@@ -11,7 +11,7 @@ const KEYWORDS = [
 ]
 const PONCTUATIONS = ['=', '<', '>', ';']
 const OPERATORS = ['+', '-', '/', '*', '%']
-const STRING_IDENTIFIERS = ['"', "'", '`']
+const STRING = ['"', "'", '`']
 
 const WHITESPACE = /(\s|\n)/
 const NUMBERS = /[\d]/
@@ -73,8 +73,8 @@ const tokenizer = (program) => {
         number += char
 
         // Continues to the next character
+        current += 1
         char = program[current]
-        current++
       }
 
       tokens.push({
@@ -86,13 +86,46 @@ const tokenizer = (program) => {
       continue
     }
 
+    if (STRING.includes(char)) {
+      let string = ''
+      let stringIdentifier = char
+
+      // Skips to the next token, since the current
+      // will be the string identifier
+      current += 1
+      char = program[current]
+
+      while (char != stringIdentifier) {
+        // Appends the current character to the
+        // end of the string
+        string += char
+
+        // Goes to the next character
+        current += 1
+        char = program[current]
+      }
+
+      tokens.push({
+        type: 'string',
+        value: string,
+      })
+
+      // Adds 1 to the current, since when the loop
+      // exits, the current token will be the string
+      // identifier
+      current += 1
+
+      continue
+    }
+
     current++
   }
 
   return tokens
 }
 
-let program = `let name = "Eder";
+let program = `
+let name = "Eder";
 let age = 15 + 5;`
 
 console.log(tokenizer(program))
